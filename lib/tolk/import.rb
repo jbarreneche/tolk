@@ -8,9 +8,9 @@ module Tolk
 
       def import_secondary_locales
         locales = Dir.entries(self.locales_config_path)
-        locales = locales.reject {|l| ['.', '..'].include?(l) || !l.ends_with?('.yml') }.map {|x| x.split('.').first } - [Tolk::Locale.primary_locale.name]
+        locales = locales.reject {|l| ['.', '..'].include?(l) || !l.ends_with?('.yml') }.map {|x| x.split('.')[-2] } - [Tolk::Locale.primary_locale.name]
 
-        locales.each {|l| import_locale(l) }
+        locales.uniq.each {|l| import_locale(l) }
       end
 
       def import_locale(locale_name)
@@ -37,10 +37,10 @@ module Tolk
     end
 
     def read_locale_file
-      locale_file = "#{self.locales_config_path}/#{self.name}.yml"
-      raise "Locale file #{locale_file} does not exists" unless File.exists?(locale_file)
-
-      self.class.flat_hash(YAML::load(IO.read(locale_file))[self.name])
+      # raise "Locale file #{locale_file} does not exists" unless File.exists?(locale_file)
+      Dir["#{self.locales_config_path}/*#{self.name}.yml"].map do |locale_file|
+        self.class.flat_hash(YAML::load(IO.read(locale_file))[self.name])
+      end.reduce(&:merge)
     end
 
   end
